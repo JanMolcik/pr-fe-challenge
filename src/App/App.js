@@ -9,6 +9,7 @@ import SideMenu from '../components/SideMenu';
 
 import Employees from '../pages/Employees/Employees';
 import { seedEmployees } from '../utils/seed.js';
+import FiltersProvider from '../providers/FilterProvider.jsx';
 
 const theme = createMuiTheme({
   palette: {
@@ -50,12 +51,14 @@ function App() {
   seedEmployees();
   return (
     <ThemeProvider theme={theme}>
-      <SideMenu />
-      <div className={classes.appMain}>
-        <Header />
-        
-        <Employees />
-      </div>
+      <FiltersProvider>
+        <SideMenu />
+        <div className={classes.appMain}>
+          <Header />
+
+          <Employees />
+        </div>
+      </FiltersProvider>
       <CssBaseline />
     </ThemeProvider>
   );

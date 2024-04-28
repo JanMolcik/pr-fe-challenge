@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   Table,
   TableHead,
@@ -8,6 +8,7 @@ import {
   TablePagination,
   TableSortLabel,
 } from '@material-ui/core';
+import { useFilters } from '../providers/FilterProvider';
 
 const useStyles = makeStyles((theme) => ({
   table: {
@@ -29,12 +30,24 @@ const useStyles = makeStyles((theme) => ({
 
 export default function useTable(records, headCells, filterFn) {
   const classes = useStyles();
-
+  const [filters] = useFilters();
   const pages = [5, 10, 25];
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(pages[page]);
   const [order, setOrder] = useState();
   const [orderBy, setOrderBy] = useState();
+
+
+  const globalFilter = useCallback((items) => {
+    return items.filter((item) => {
+      let include = true;
+      Object.entries(filters ?? {}).forEach(([key, value]) => {
+        if (!item[key]) return;
+        if(item[key] !== value) include = false;
+      });
+      return include;
+    });
+  }, [filters]);
 
   const TblContainer = (props) => (
     <Table className={classes.table}>{props.children}</Table>
@@ -124,7 +137,7 @@ export default function useTable(records, headCells, filterFn) {
 
   const recordsAfterPagingAndSorting = () => {
     return stableSort(
-      filterFn.fn(records),
+      filterFn.fn(globalFilter(records)),
       getComparator(order, orderBy)
     ).slice(page * rowsPerPage, (page + 1) * rowsPerPage);
   };
