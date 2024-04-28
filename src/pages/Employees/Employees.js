@@ -10,6 +10,7 @@ import {
   TableCell,
   Toolbar,
   InputAdornment,
+  Checkbox,
 } from '@material-ui/core';
 import useTable from '../../components/useTable';
 import * as employeeService from '../../services/employeeService';
@@ -64,6 +65,7 @@ export default function Employees() {
     title: '',
     subTitle: '',
   });
+  const [selected, setSelected] = React.useState([]);
 
   const {
     TblContainer,
@@ -118,6 +120,37 @@ export default function Employees() {
     });
   };
 
+  const handleSelectAllClick = (event) => {
+    if (event.target.checked) {
+      const newSelecteds = records.map((n) => n.id);
+      setSelected(newSelecteds);
+      return;
+    }
+    setSelected([]);
+  };
+
+  const handleClick = (event, id) => {
+    const selectedIndex = selected.indexOf(id);
+    let newSelected = [];
+
+    if (selectedIndex === -1) {
+      newSelected = newSelected.concat(selected, id);
+    } else if (selectedIndex === 0) {
+      newSelected = newSelected.concat(selected.slice(1));
+    } else if (selectedIndex === selected.length - 1) {
+      newSelected = newSelected.concat(selected.slice(0, -1));
+    } else if (selectedIndex > 0) {
+      newSelected = newSelected.concat(
+        selected.slice(0, selectedIndex),
+        selected.slice(selectedIndex + 1),
+      );
+    }
+
+    setSelected(newSelected);
+  };
+
+  const isSelected = (name) => selected.indexOf(name) !== -1;
+
   return (
     <>
       <PageHeader
@@ -151,41 +184,50 @@ export default function Employees() {
           />
         </Toolbar>
         <TblContainer>
-          <TblHead />
+          <TblHead onSelectAllClick={handleSelectAllClick} rowCount={records.length} numSelected={selected.length} />
           <TableBody>
-            {recordsAfterPagingAndSorting().map((item) => (
-              <TableRow key={item.id}>
-                <TableCell>{item.fullName}</TableCell>
-                <TableCell>{item.email}</TableCell>
-                <TableCell>{item.mobile}</TableCell>
-                <TableCell>{item.department}</TableCell>
-                <TableCell>
-                  <Controls.ActionButton
-                    color='primary'
-                    onClick={() => {
-                      openInPopup(item);
-                    }}
-                  >
-                    <EditOutlinedIcon fontSize='small' />
-                  </Controls.ActionButton>
-                  <Controls.ActionButton
-                    color='secondary'
-                    onClick={() => {
-                      setConfirmDialog({
-                        isOpen: true,
-                        title: 'Are you sure you want to delete this record?',
-                        subTitle: "You can't undo this operation",
-                        onConfirm: () => {
-                          onDelete(item.id);
-                        },
-                      });
-                    }}
-                  >
-                    <CloseIcon fontSize='small' />
-                  </Controls.ActionButton>
-                </TableCell>
-              </TableRow>
-            ))}
+            {recordsAfterPagingAndSorting().map((item) => {
+
+              const isItemSelected = isSelected(item.id);
+              return (
+                <TableRow onClick={(event) =>handleClick(event, item.id)} key={item.id}>
+                  <TableCell padding="checkbox">
+                    <Checkbox
+                      checked={isItemSelected}
+                    />
+                  </TableCell>
+                  <TableCell>{item.fullName}</TableCell>
+                  <TableCell>{item.email}</TableCell>
+                  <TableCell>{item.mobile}</TableCell>
+                  <TableCell>{item.department}</TableCell>
+                  <TableCell>
+                    <Controls.ActionButton
+                      color='primary'
+                      onClick={() => {
+                        openInPopup(item);
+                      }}
+                    >
+                      <EditOutlinedIcon fontSize='small' />
+                    </Controls.ActionButton>
+                    <Controls.ActionButton
+                      color='secondary'
+                      onClick={() => {
+                        setConfirmDialog({
+                          isOpen: true,
+                          title: 'Are you sure you want to delete this record?',
+                          subTitle: "You can't undo this operation",
+                          onConfirm: () => {
+                            onDelete(item.id);
+                          },
+                        });
+                      }}
+                    >
+                      <CloseIcon fontSize='small' />
+                    </Controls.ActionButton>
+                  </TableCell>
+                </TableRow>
+            )})}
+
           </TableBody>
         </TblContainer>
         <TblPagination />

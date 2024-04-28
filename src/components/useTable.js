@@ -7,6 +7,9 @@ import {
   makeStyles,
   TablePagination,
   TableSortLabel,
+  Checkbox,
+  IconButton,
+  Tooltip,
 } from '@material-ui/core';
 import { useFilters } from '../providers/FilterProvider';
 
@@ -50,10 +53,12 @@ export default function useTable(records, headCells, filterFn) {
   }, [filters]);
 
   const TblContainer = (props) => (
-    <Table className={classes.table}>{props.children}</Table>
+    <Table options={{
+      selection: true
+    }} className={classes.table}>{props.children}</Table>
   );
 
-  const TblHead = (props) => {
+  const TblHead = ({ numSelected, rowCount, onSelectAllClick}) => {
     const handleSortRequest = (cellId) => {
       const isAsc = orderBy === cellId && order === 'asc';
       setOrder(isAsc ? 'desc' : 'asc');
@@ -63,6 +68,14 @@ export default function useTable(records, headCells, filterFn) {
     return (
       <TableHead>
         <TableRow>
+          <TableCell padding="checkbox">
+              <Checkbox
+                indeterminate={numSelected > 0 && numSelected < rowCount}
+                checked={rowCount > 0 && numSelected === rowCount}
+                onChange={onSelectAllClick}
+                inputProps={{ 'aria-label': 'select all desserts' }}
+              />
+          </TableCell>
           {headCells.map((headCell) => (
             <TableCell
               key={headCell.id}
@@ -83,6 +96,13 @@ export default function useTable(records, headCells, filterFn) {
               )}
             </TableCell>
           ))}
+          {numSelected > 0 && (
+            <Tooltip title="Delete">
+              <IconButton aria-label="delete">
+                Delete
+              </IconButton>
+            </Tooltip>
+          ) }
         </TableRow>
       </TableHead>
     );
@@ -149,3 +169,4 @@ export default function useTable(records, headCells, filterFn) {
     recordsAfterPagingAndSorting,
   };
 }
+

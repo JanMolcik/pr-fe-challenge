@@ -18,9 +18,10 @@ const useStyles = makeStyles({
   filters: {
     display: 'flex',
     flexDirection: 'column',
-    padding: '10px',
-    margin: '10px',
-    marginTop: '18rem',
+    padding: '1rem',
+    margin: '1.5rem',
+    marginTop: '14rem',
+    height: '100%',
   }
 });
 
