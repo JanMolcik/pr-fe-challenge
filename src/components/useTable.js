@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   Table,
   TableHead,
@@ -7,7 +7,11 @@ import {
   makeStyles,
   TablePagination,
   TableSortLabel,
+  Checkbox,
+  IconButton,
+  Tooltip,
 } from '@material-ui/core';
+import { useFilters } from '../providers/FilterProvider';
 
 const useStyles = makeStyles((theme) => ({
   table: {
@@ -29,18 +33,32 @@ const useStyles = makeStyles((theme) => ({
 
 export default function useTable(records, headCells, filterFn) {
   const classes = useStyles();
-
+  const [filters] = useFilters();
   const pages = [5, 10, 25];
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(pages[page]);
   const [order, setOrder] = useState();
   const [orderBy, setOrderBy] = useState();
 
+
+  const globalFilter = useCallback((items) => {
+    return items.filter((item) => {
+      let include = true;
+      Object.entries(filters ?? {}).forEach(([key, value]) => {
+        if (!item[key]) return;
+        if(item[key] !== value) include = false;
+      });
+      return include;
+    });
+  }, [filters]);
+
   const TblContainer = (props) => (
-    <Table className={classes.table}>{props.children}</Table>
+    <Table options={{
+      selection: true
+    }} className={classes.table}>{props.children}</Table>
   );
 
-  const TblHead = (props) => {
+  const TblHead = ({ numSelected, rowCount, onSelectAllClick}) => {
     const handleSortRequest = (cellId) => {
       const isAsc = orderBy === cellId && order === 'asc';
       setOrder(isAsc ? 'desc' : 'asc');
@@ -50,6 +68,14 @@ export default function useTable(records, headCells, filterFn) {
     return (
       <TableHead>
         <TableRow>
+          <TableCell padding="checkbox">
+              <Checkbox
+                indeterminate={numSelected > 0 && numSelected < rowCount}
+                checked={rowCount > 0 && numSelected === rowCount}
+                onChange={onSelectAllClick}
+                inputProps={{ 'aria-label': 'select all desserts' }}
+              />
+          </TableCell>
           {headCells.map((headCell) => (
             <TableCell
               key={headCell.id}
@@ -70,6 +96,13 @@ export default function useTable(records, headCells, filterFn) {
               )}
             </TableCell>
           ))}
+          {numSelected > 0 && (
+            <Tooltip title="Delete">
+              <IconButton aria-label="delete">
+                Delete
+              </IconButton>
+            </Tooltip>
+          ) }
         </TableRow>
       </TableHead>
     );
@@ -124,7 +157,7 @@ export default function useTable(records, headCells, filterFn) {
 
   const recordsAfterPagingAndSorting = () => {
     return stableSort(
-      filterFn.fn(records),
+      filterFn.fn(globalFilter(records)),
       getComparator(order, orderBy)
     ).slice(page * rowsPerPage, (page + 1) * rowsPerPage);
   };
@@ -136,3 +169,4 @@ export default function useTable(records, headCells, filterFn) {
     recordsAfterPagingAndSorting,
   };
 }
+
